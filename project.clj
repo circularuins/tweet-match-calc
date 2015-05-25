@@ -1,4 +1,4 @@
-(defproject db-sample "0.1.0-SNAPSHOT"
+(defproject tweet-match-calc "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
