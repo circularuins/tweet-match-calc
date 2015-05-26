@@ -17,4 +17,4 @@
     (range (count y)))))
 
 (defn get-leven-noun [user-x user-y]
-  (levenshtein-distance (morpho/noun-text user-x) (morpho/noun-text user-y)))
+  (levenshtein-distance (:text (morpho/get-tweet-analyze user-x)) (:text (morpho/get-tweet-analyze user-y))))

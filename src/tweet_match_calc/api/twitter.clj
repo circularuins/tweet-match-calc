@@ -21,6 +21,7 @@
 (def paging
    (Paging. (int 1) (int 100)))
 
+;; ユーザータイムラインの取得
 (defn get-tweets [screen-name]
   (let [twitter (make-twitter)
         tweets (.getUserTimeline twitter screen-name paging)]
