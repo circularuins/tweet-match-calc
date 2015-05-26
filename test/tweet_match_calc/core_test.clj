@@ -1,6 +1,6 @@
-(ns db-sample.core-test
+(ns tweet-match-calc.core-test
   (:require [clojure.test :refer :all]
-            [db-sample.core :refer :all]))
+            [tweet-match-calc.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
