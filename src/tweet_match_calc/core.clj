@@ -13,11 +13,15 @@
 (def g-1 ["kareshi_hoshi_" "namida1055" "0428hrChi" "nemukyun1" "chomado" "Zwei_Megu" "xion_2574" "ManyaRiko" "gyuunyuu_umai" "tamakazura_yuri"])
 
 
+;; mysqlから未解析のユーザーデータを取得する
+(def boys-data (mysql/select-boys))
+(def girls-data (mysql/select-girls))
+
 ;; １ユーザー毎の、相性ランキング、頻出ワードを取得する
 (defn get-analyses [user candidates twitters]
   (loop [i 0
          analyses (atom [])
-         user-data (morpho/get-tweet-analyze user (nth twitters (- (count twitters) 1)))]
+         user-data (morpho/get-tweet-analyze (:screen_name user) (nth twitters (- (count twitters) 1)))]
     (when (< i (count candidates))
       (let [twitter (nth twitters (rem i (count twitters)))
             candidate (nth candidates i)]
@@ -26,7 +30,7 @@
                                         :leven (leven/levenshtein-distance (:text user-data) (:text (morpho/get-tweet-analyze candidate twitter)))))
         (if (= (+ i 1) (count candidates))
           (println
-           (array-map :screen-name user
+           (array-map :screen-name (:screen_name user)
                       :top-words (:top-words user-data)
                       :ranking (sort-by :leven @analyses)))
           (recur (inc i) analyses user-data))))))
@@ -34,3 +38,8 @@
 ;; 全ユーザーの解析
 (defn go-matching [users candidates twitters]
   (map #(get-analyses % candidates twitters) users))
+
+
+;; 解析のテスト
+;(go-matching boys-data g-1 tw-accounts)
+;(go-matching girls-data b-1 tw-accounts)
