@@ -1,45 +1,36 @@
 (ns tweet-match-calc.core
   (:require [tweet-match-calc.db.mysql :as mysql]
-            [tweet-match-calc.api.twitter :as twitter]
             [tweet-match-calc.calc.morpho :as morpho]
             [tweet-match-calc.calc.leven :as leven]
             [clojure.string :as str]))
 
 
-;;　テストデータ
-;; (morpho/get-tweet-analyze "tamakazura_yuri")
-;; (morpho/get-tweet-analyze "doumonnd")
+;; API利用用twitterアカウント
+(def tw-accounts (read-string (slurp "config/twitter.clj")))
 
-;; (morpho/get-tweet-analyze "kanojo_hoshi_")
-;; (morpho/get-tweet-analyze "rikut_rock")
-;; (morpho/get-tweet-analyze "BaskeHi")
-;; (morpho/get-tweet-analyze "ilikesicp")
-;; (morpho/get-tweet-analyze "nobkz")
-;; (morpho/get-tweet-analyze "takuya199850")
-;; (morpho/get-tweet-analyze "mug_en")
-;; (morpho/get-tweet-analyze "charaoyukirin")
-;; (morpho/get-tweet-analyze "tetsuya1975m")
-
-;; (morpho/get-tweet-analyze "kareshi_hoshi_")
-;; (morpho/get-tweet-analyze "namida1055")
-;; (morpho/get-tweet-analyze "0428hrChi")
-;; (morpho/get-tweet-analyze "nemukyun1")
-;; (morpho/get-tweet-analyze "chomado")
-;; (morpho/get-tweet-analyze "Zwei_Megu")
-;; (morpho/get-tweet-analyze "xion_2574")
-;; (morpho/get-tweet-analyze "ManyaRiko")
-;; (morpho/get-tweet-analyze "gyuunyuu_umai")
+;; テストデータ
+(def b-1 ["kanojo_hoshi_" "eclipse_rkt" "BaskeHi" "ilikesicp" "nobkz" "takuya199850" "mug_en" "charaoyukirin" "tetsuya1975m" "doumonnd"])
+(def g-1 ["kareshi_hoshi_" "namida1055" "0428hrChi" "nemukyun1" "chomado" "Zwei_Megu" "xion_2574" "ManyaRiko" "gyuunyuu_umai" "tamakazura_yuri"])
 
 
-;; (leven/get-leven-noun "tamakazura_yuri" "doumonnd")
+;; １ユーザー毎の、相性ランキング、頻出ワードを取得する
+(defn get-analyses [user candidates twitters]
+  (loop [i 0
+         analyses (atom [])
+         user-data (morpho/get-tweet-analyze user (nth twitters (- (count twitters) 1)))]
+    (when (< i (count candidates))
+      (let [twitter (nth twitters (rem i (count twitters)))
+            candidate (nth candidates i)]
+        (Thread/sleep 900)
+        (swap! analyses conj (array-map :screen-name candidate
+                                        :leven (leven/levenshtein-distance (:text user-data) (:text (morpho/get-tweet-analyze candidate twitter)))))
+        (if (= (+ i 1) (count candidates))
+          (println
+           (array-map :screen-name user
+                      :top-words (:top-words user-data)
+                      :ranking (sort-by :leven @analyses)))
+          (recur (inc i) analyses user-data))))))
 
-(def boys ["kanojo_hoshi_" "rikut_rock" "BaskeHi" "ilikesicp" "nobkz" "takuya199850" "mug_en" "charaoyukirin" "tetsuya1975m"])
-(def girls ["kareshi_hoshi_" "namida1055" "0428hrChi" "nemukyun1" "chomado" "Zwei_Megu" "xion_2574" "ManyaRiko" "gyuunyuu_umai"])
-
-(defn test-leven []
-  (for [b boys
-        g girls]
-    (do
-      (Thread/sleep 5000)
-      (str b "/" g ":" (leven/get-leven-noun b g))
-      )))
+;; 全ユーザーの解析
+(defn go-matching [users candidates twitters]
+  (map #(get-analyses % candidates twitters) users))

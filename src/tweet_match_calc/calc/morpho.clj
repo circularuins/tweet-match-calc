@@ -104,12 +104,12 @@
           words))
 
 ;; 名詞の集計
-(defn count-noun-freq [screen-name]
-  (reverse (sort-by second (word-count (select-noun (twitter/get-tweets screen-name))))))
+(defn count-noun-freq [screen-name auth]
+  (reverse (sort-by second (word-count (select-noun (twitter/get-tweets screen-name auth))))))
 
 ;; 動詞の集計
-(defn count-verb-freq [screen-name]
-    (reverse (sort-by second (word-count (select-verb (twitter/get-tweets screen-name))))))
+(defn count-verb-freq [screen-name auth]
+    (reverse (sort-by second (word-count (select-verb (twitter/get-tweets screen-name auth))))))
 
 
 
@@ -138,9 +138,9 @@
    (map #(nth % 0))))
 
 ;; 最終的に欲しいテキストとtopワードのマップを返す
-(defn get-tweet-analyze [screen-name]
-  (let [n-words (count-noun-freq screen-name)
-        v-words (count-verb-freq screen-name)]
+(defn get-tweet-analyze [screen-name auth]
+  (let [n-words (count-noun-freq screen-name auth)
+        v-words (count-verb-freq screen-name auth)]
     (array-map
      :text (str (noun-text n-words) (verb-text v-words))
      :top-words (get-top-words n-words))))

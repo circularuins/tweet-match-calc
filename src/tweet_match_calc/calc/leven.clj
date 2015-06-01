@@ -1,5 +1,4 @@
-(ns tweet-match-calc.calc.leven
-  (:require [tweet-match-calc.calc.morpho :as morpho]))
+(ns tweet-match-calc.calc.leven)
 
 (defn levenshtein-distance [x y]
   (last
@@ -15,6 +14,3 @@
        [(+ j 1)] (range (count x))))
     (range (+ 1 (count x)))
     (range (count y)))))
-
-(defn get-leven-noun [user-x user-y]
-  (levenshtein-distance (:text (morpho/get-tweet-analyze user-x)) (:text (morpho/get-tweet-analyze user-y))))
