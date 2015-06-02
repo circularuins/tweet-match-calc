@@ -21,18 +21,26 @@
 (def db (mg/get-db (mg/connect) "matching-db"))
 
 (defn add-data
-  [screen-name top-words ranking]
+  [id screen-name top-words ranking sex]
   (let [coll "mach-ranking"]
     (mc/update db coll {:user-id id}
-               {:screen-name screen-name
+               {:user-id id
+                :screen-name screen-name
                 :top-words top-words
                 :ranking ranking
+                :sex sex
                 :date (.toString (tl/local-now))}
                {:upsert true})))
 
 (defn get-data
   [screen-name]
-  (->> (mq/with-collection db "user-data"
-         (mq/find {:chat-room room})
+  (->> (mq/with-collection db "mach-ranking"
+         (mq/find {:screen-name screen-name})
          (mq/sort (array-map :date 1)))
        (map fix-object)))
+
+(defn all-clear [coll]
+  (mc/remove db coll))
+
+(defn count-all [coll]
+  (mc/count db coll))

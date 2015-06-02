@@ -19,29 +19,30 @@
 (def girls-data (mysql/select-girls))
 
 ;; １ユーザー毎の、相性ランキング、頻出ワードを取得する
-(defn get-analyses [user candidates twitters]
+(defn get-analyses [user candidates twitters sex]
   (loop [i 0
          analyses (atom [])
          user-data (morpho/get-tweet-analyze (:screen_name user) (nth twitters (- (count twitters) 1)))]
     (when (< i (count candidates))
       (let [twitter (nth twitters (rem i (count twitters)))
             candidate (nth candidates i)]
-        (Thread/sleep 900)
+        (Thread/sleep 1000)
         (swap! analyses conj (array-map :screen-name candidate
                                         :leven (leven/levenshtein-distance (:text user-data) (:text (morpho/get-tweet-analyze candidate twitter)))))
         (if (= (+ i 1) (count candidates))
-          (mongo/add-data [(:screen_name user) (:top-words user-data) (sort-by :leven @analyses)])
-          (println
-           (array-map :screen-name (:screen_name user)
-                      :top-words (:top-words user-data)
-                      :ranking (sort-by :leven @analyses)))
+          (do
+            (mongo/add-data (:user_id user) (:screen_name user) (:top-words user-data) (sort-by :leven @analyses) sex)
+            (println
+             (array-map :screen-name (:screen_name user)
+                        :top-words (:top-words user-data)
+                        :ranking (sort-by :leven @analyses))))
           (recur (inc i) analyses user-data))))))
 
 ;; 全ユーザーの解析
-(defn go-matching [users candidates twitters]
-  (map #(get-analyses % candidates twitters) users))
+(defn go-matching [users candidates twitters sex]
+  (map #(get-analyses % candidates twitters sex) users))
 
 
 ;; 解析のテスト
-;(go-matching boys-data g-1 tw-accounts)
-;(go-matching girls-data b-1 tw-accounts)
+;(go-matching boys-data g-1 tw-accounts "b")
+;(go-matching girls-data b-1 tw-accounts "g")

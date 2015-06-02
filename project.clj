@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [korma "0.4.1"]
                  [mysql/mysql-connector-java "5.1.35"]
+                 [com.novemberain/monger "2.0.0"]
                  [clj-time "0.9.0"]
                  [org.twitter4j/twitter4j-core "4.0.2"]
                  [org.atilika.kuromoji/kuromoji "0.7.7"]]
