@@ -39,6 +39,18 @@
          (mq/sort (array-map :date 1)))
        (map fix-object)))
 
+(defn get-rnd-user
+  [sex]
+  (->> (mq/with-collection db "mach-ranking"
+         (mq/find {:sex sex})
+         (mq/fields [:screen-name]))
+       (shuffle)
+       (take 10)
+       (map #(:screen-name %))))
+
+
+;; 補助関数
+
 (defn all-clear [coll]
   (mc/remove db coll))
 

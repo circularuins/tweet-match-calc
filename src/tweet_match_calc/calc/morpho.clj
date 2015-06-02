@@ -39,7 +39,7 @@
       false
       true)))
 (defn www? [word]
-  (if (re-matches #"^[ｗ|？|！|ー]+$" word)
+  (if (re-matches #"^[ｗ|？|！|ー|～]+$" word)
     false
     true))
 
