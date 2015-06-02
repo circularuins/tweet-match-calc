@@ -1,5 +1,6 @@
 (ns tweet-match-calc.core
   (:require [tweet-match-calc.db.mysql :as mysql]
+            [tweet-match-calc.db.mongo :as mongo]
             [tweet-match-calc.calc.morpho :as morpho]
             [tweet-match-calc.calc.leven :as leven]
             [clojure.string :as str]))
@@ -29,6 +30,7 @@
         (swap! analyses conj (array-map :screen-name candidate
                                         :leven (leven/levenshtein-distance (:text user-data) (:text (morpho/get-tweet-analyze candidate twitter)))))
         (if (= (+ i 1) (count candidates))
+          (mongo/add-data [(:screen_name user) (:top-words user-data) (sort-by :leven @analyses)])
           (println
            (array-map :screen-name (:screen_name user)
                       :top-words (:top-words user-data)
