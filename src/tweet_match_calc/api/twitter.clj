@@ -29,6 +29,12 @@
                   (map #(.getUser %))
                   (first)
                   (.getProfileImageURL))
+                 :user-name
+                 (->>
+                  tweets
+                  (map #(.getUser %))
+                  (first)
+                  (.getName))
                  :text
                  (->>
                   tweets

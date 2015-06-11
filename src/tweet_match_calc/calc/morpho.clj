@@ -149,5 +149,6 @@
       (array-map
        :screen_name (:screen-name tw-result)
        :profile-image (:profile-image tw-result)
+       :user-name (:user-name tw-result)
        :text (str (noun-text n-words) (verb-text v-words))
        :top-words (get-top-words n-words)))))

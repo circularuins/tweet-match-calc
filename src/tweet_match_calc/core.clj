@@ -28,6 +28,7 @@
                                                        twitter)]
           (swap! analyses conj (array-map :screen-name (:screen-name candidate)
                                           :profile-image (:profile-image candidate-data)
+                                          :user-name (:user-name candidate-data)
                                           :leven (leven/levenshtein-distance (:text user-data)
                                                                              (:text candidate-data))))
           (if (= (+ i 1) (count candidates))
@@ -37,9 +38,11 @@
                               (:top-words user-data)
                               (sort-by :leven @analyses)
                               sex
-                              (:profile-image user-data))
+                              (:profile-image user-data)
+                              (:user-name user-data))
               (println
                (array-map :screen-name (:screen_name user)
+                          :user-name (:user-name user-data)
                           :prof-img (:profile-image user-data)
                           :top-words (:top-words user-data)
                           :ranking (sort-by :leven @analyses))))
