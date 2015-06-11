@@ -21,7 +21,7 @@
 (def db (mg/get-db (mg/connect) "matching-db"))
 
 (defn add-data
-  [id screen-name top-words ranking sex]
+  [id screen-name top-words ranking sex profile-image]
   (let [coll "mach-ranking"]
     (mc/update db coll {:user-id id}
                {:user-id id
@@ -29,6 +29,7 @@
                 :top-words top-words
                 :ranking ranking
                 :sex sex
+                :profile-image profile-image
                 :date (.toString (tl/local-now))}
                {:upsert true})))
 
@@ -43,10 +44,9 @@
   [sex]
   (->> (mq/with-collection db "mach-ranking"
          (mq/find {:sex sex})
-         (mq/fields [:screen-name]))
+         (mq/fields [:screen-name :user-id]))
        (shuffle)
-       (take 10)
-       (map #(:screen-name %))))
+       (take 10)))
 
 
 ;; 補助関数

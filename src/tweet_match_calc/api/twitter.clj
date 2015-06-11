@@ -19,10 +19,19 @@
    (Paging. (int 1) (int 100)))
 
 ;; ユーザータイムラインの取得
-(defn get-tweets [screen-name auth]
-  (let [twitter (make-twitter auth)
-        tweets (.getUserTimeline twitter screen-name paging)]
-    (->>
-     tweets
-     (map #(.getText %))
-     str/join)))
+(defn get-tweets [user-id auth]
+  (try
+    (let [twitter (make-twitter auth)
+          tweets (.getUserTimeline twitter user-id paging)]
+      (array-map :profile-image
+                 (->>
+                  tweets
+                  (map #(.getUser %))
+                  (first)
+                  (.getProfileImageURL))
+                 :text
+                 (->>
+                  tweets
+                  (map #(.getText %))
+                  str/join)))
+    (catch Exception e (str "caught exception: " (.getMessage e)))))

@@ -64,34 +64,38 @@
 ;; 名詞を抜き出す
 (defn select-noun
   [sentence]
-  (let [^Tokenizer tokenizer (.build (Tokenizer/builder))]
-    (->>
-     (filter not-nil?
-             (for [^Token token (.tokenize tokenizer sentence)]
-               (if (some noun? (str/split (.getPartOfSpeech token) #","))
-                 (.getSurfaceForm token))))
-     (filter single-char?)
-     (filter filtering-nouns?)
-     (filter hankaku-only?)
-     (filter www?)
-     (map #(if (not (= true (str-number? %))) %))
-     (map convert-kanojo-kareshi)
-     )))
+  (try
+    (let [^Tokenizer tokenizer (.build (Tokenizer/builder))]
+      (->>
+       (filter not-nil?
+               (for [^Token token (.tokenize tokenizer sentence)]
+                 (if (some noun? (str/split (.getPartOfSpeech token) #","))
+                   (.getSurfaceForm token))))
+       (filter single-char?)
+       (filter filtering-nouns?)
+       (filter hankaku-only?)
+       (filter www?)
+       (map #(if (not (= true (str-number? %))) %))
+       (map convert-kanojo-kareshi)
+       ))
+    (catch NullPointerException e (str "caught exception: " (.getMessage e)))))
 
 ;; 動詞を抜き出す
 (defn select-verb
   [sentence]
-  (let [^Tokenizer tokenizer (.build (Tokenizer/builder))]
-    (->>
-     (filter not-nil?
-             (for [^Token token (.tokenize tokenizer sentence)]
-               (if (some verb? (str/split (.getPartOfSpeech token) #","))
-                 (.getSurfaceForm token))))
-     (filter single-char?)
-     (filter filtering-verbs?)
-     (filter hankaku-only?)
-     (map #(if (not (= true (str-number? %))) %))
-     )))
+  (try
+    (let [^Tokenizer tokenizer (.build (Tokenizer/builder))]
+      (->>
+       (filter not-nil?
+               (for [^Token token (.tokenize tokenizer sentence)]
+                 (if (some verb? (str/split (.getPartOfSpeech token) #","))
+                   (.getSurfaceForm token))))
+       (filter single-char?)
+       (filter filtering-verbs?)
+       (filter hankaku-only?)
+       (map #(if (not (= true (str-number? %))) %))
+       ))
+    (catch NullPointerException e (str "caught exception: " (.getMessage e)))))
 
 
 
@@ -104,12 +108,12 @@
           words))
 
 ;; 名詞の集計
-(defn count-noun-freq [screen-name auth]
-  (reverse (sort-by second (word-count (select-noun (twitter/get-tweets screen-name auth))))))
+(defn count-noun-freq [data]
+  (reverse (sort-by second (word-count (select-noun (:text data))))))
 
 ;; 動詞の集計
-(defn count-verb-freq [screen-name auth]
-    (reverse (sort-by second (word-count (select-verb (twitter/get-tweets screen-name auth))))))
+(defn count-verb-freq [data]
+    (reverse (sort-by second (word-count (select-verb (:text data))))))
 
 
 
@@ -137,10 +141,13 @@
    (take 5 words)
    (map #(nth % 0))))
 
-;; 最終的に欲しいテキストとtopワードのマップを返す
-(defn get-tweet-analyze [screen-name auth]
-  (let [n-words (count-noun-freq screen-name auth)
-        v-words (count-verb-freq screen-name auth)]
-    (array-map
-     :text (str (noun-text n-words) (verb-text v-words))
-     :top-words (get-top-words n-words))))
+;; 最終的に欲しいマップを返す
+(defn get-tweet-analyze [user-id auth]
+  (let [tw-result (twitter/get-tweets user-id auth)]
+    (let [n-words (count-noun-freq tw-result)
+          v-words (count-verb-freq tw-result)]
+      (array-map
+       :screen_name (:screen-name tw-result)
+       :profile-image (:profile-image tw-result)
+       :text (str (noun-text n-words) (verb-text v-words))
+       :top-words (get-top-words n-words)))))

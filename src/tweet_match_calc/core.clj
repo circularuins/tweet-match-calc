@@ -18,29 +18,38 @@
 (defn get-analyses [user candidates twitters sex]
   (loop [i 0
          analyses (atom [])
-         user-data (morpho/get-tweet-analyze (:screen_name user) (nth twitters (- (count twitters) 1)))]
+         user-data (morpho/get-tweet-analyze (Long/parseLong (:user_id user))
+                                             (nth twitters (- (count twitters) 1)))]
     (when (< i (count candidates))
       (let [twitter (nth twitters (rem i (count twitters)))
             candidate (nth candidates i)]
-        (Thread/sleep 900)
-        (swap! analyses conj (array-map :screen-name candidate
-                                        :leven (leven/levenshtein-distance (:text user-data) (:text (morpho/get-tweet-analyze candidate twitter)))))
-        (if (= (+ i 1) (count candidates))
-          (do
-            (mongo/add-data (:user_id user) (:screen_name user) (:top-words user-data) (sort-by :leven @analyses) sex)
-            (println
-             (array-map :screen-name (:screen_name user)
-                        :top-words (:top-words user-data)
-                        :ranking (sort-by :leven @analyses))))
-          (recur (inc i) analyses user-data))))))
+        (Thread/sleep 30)
+        (let [candidate-data (morpho/get-tweet-analyze (Long/parseLong (:user-id candidate))
+                                                       twitter)]
+          (swap! analyses conj (array-map :screen-name (:screen-name candidate)
+                                          :profile-image (:profile-image candidate-data)
+                                          :leven (leven/levenshtein-distance (:text user-data)
+                                                                             (:text candidate-data))))
+          (if (= (+ i 1) (count candidates))
+            (do
+              (mongo/add-data (:user_id user)
+                              (:screen_name user)
+                              (:top-words user-data)
+                              (sort-by :leven @analyses)
+                              sex
+                              (:profile-image user-data))
+              (println
+               (array-map :screen-name (:screen_name user)
+                          :prof-img (:profile-image user-data)
+                          :top-words (:top-words user-data)
+                          :ranking (sort-by :leven @analyses))))
+            (recur (inc i) analyses user-data)))))))
 
-;; 全ユーザーの解析
+;; バッチ処理用
 (defn go-matching [users twitters sex]
-  (try
-    (if (= sex "b")
-      (map #(get-analyses % (mongo/get-rnd-user "g") twitters sex) users)
-      (map #(get-analyses % (mongo/get-rnd-user "b") twitters sex) users))
-    (catch Exception e (str "caught exception: " (.getMessage e)))))
+  (if (= sex "b")
+    (map #(get-analyses % (mongo/get-rnd-user "g") twitters sex) users)
+    (map #(get-analyses % (mongo/get-rnd-user "b") twitters sex) users)))
 
 
 ;; 解析のテスト
