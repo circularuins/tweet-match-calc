@@ -51,10 +51,13 @@
 ;; バッチ処理用
 (defn go-matching [users twitters sex]
   (if (= sex "b")
-    (map #(get-analyses % (mongo/get-rnd-user "g") twitters sex) users)
-    (map #(get-analyses % (mongo/get-rnd-user "b") twitters sex) users)))
+    (pmap #(get-analyses % (mongo/get-rnd-user "g") twitters sex) users)
+    (pmap #(get-analyses % (mongo/get-rnd-user "b") twitters sex) users)))
 
 
 ;; 解析のテスト
 ;(go-matching (mysql/select-boys) tw-accounts "b")
 ;(go-matching (mysql/select-girls) tw-accounts "g")
+(defn pararell-match []
+  (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
+           (go-matching (mysql/select-girls) tw-accounts "g")))
