@@ -28,7 +28,7 @@
                   tweets
                   (map #(.getUser %))
                   (first)
-                  (.getProfileImageURL))
+                  (.getBiggerProfileImageURL))
                  :user-name
                  (->>
                   tweets
