@@ -29,6 +29,12 @@
                   (map #(.getUser %))
                   (first)
                   (.getBiggerProfileImageURL))
+                 :profile-back-url
+                 (->>
+                  tweets
+                  (map #(.getUser %))
+                  (first)
+                  (.getProfileBackgroundImageURL))
                  :user-name
                  (->>
                   tweets

@@ -21,7 +21,7 @@
 (def db (mg/get-db (mg/connect) "matching-db"))
 
 (defn add-data
-  [id screen-name top-words ranking sex profile-image user-name]
+  [id screen-name top-words ranking sex profile-image user-name tweet date description profile-back-url]
   (let [coll "mach-ranking"]
     (mc/update db coll {:user-id id}
                {:user-id id
@@ -31,7 +31,11 @@
                 :sex sex
                 :profile-image profile-image
                 :user-name user-name
-                :date (.toString (tl/local-now))}
+                :calc-date (.toString (tl/local-now))
+                :tweet tweet
+                :date date
+                :description description
+                :profile-back-url profile-back-url}
                {:upsert true})))
 
 (defn get-data

@@ -39,7 +39,11 @@
                               (sort-by :leven @analyses)
                               sex
                               (:profile-image user-data)
-                              (:user-name user-data))
+                              (:user-name user-data)
+                              (:tweet user)
+                              (:date user)
+                              (:description user)
+                              (:profile-back-url user-data))
               (println
                (array-map :screen-name (:screen_name user)
                           :user-name (:user-name user-data)
@@ -55,9 +59,24 @@
     (pmap #(get-analyses % (mongo/get-rnd-user "b") twitters sex) users)))
 
 
-;; 解析のテスト
-;(go-matching (mysql/select-boys) tw-accounts "b")
-;(go-matching (mysql/select-girls) tw-accounts "g")
+;; 解析実行
 (defn pararell-match []
   (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
            (go-matching (mysql/select-girls) tw-accounts "g")))
+
+
+;; ランキングデータ初期化用
+(defn fix-object [object]
+  (let [id (:user_id object)
+        name (:screen_name object)]
+    (-> object
+        (assoc :user-id id)
+        (assoc :screen-name name))))
+
+(defn init-ranking
+  [num]
+  (let [boys (mysql/get-rnd-boys num)
+        girls (mysql/get-rnd-girls num)]
+;    (mongo/all-clear "mach-ranking")
+    (pvalues (pmap #(get-analyses % (map fix-object girls) tw-accounts "b") boys)
+             (pmap #(get-analyses % (map fix-object boys)  tw-accounts "g") girls))))

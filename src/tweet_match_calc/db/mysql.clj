@@ -28,7 +28,7 @@
 (defn select-boys []
   (->>
    (select kanojo_hoshi
-           (fields :name :screen_name :user_id :date :flag)
+           (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (order :no :DESC)
            (limit 50))
    (filter #(= 0 (:flag %)))))
@@ -36,7 +36,25 @@
 (defn select-girls []
   (->>
    (select kareshi_hoshi
-           (fields :name :screen_name :user_id :date :flag)
+           (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (order :no :DESC)
            (limit 50))
    (filter #(= 0 (:flag %)))))
+
+(defn get-rnd-boys
+  [num]
+  (->>
+   (select kanojo_hoshi
+           (fields :name :screen_name :user_id :date :flag :tweet :date :description)
+           (where {:flag 0}))
+   (shuffle)
+   (take num)))
+
+(defn get-rnd-girls
+  [num]
+  (->>
+   (select kareshi_hoshi
+           (fields :name :screen_name :user_id :date :flag :tweet :date :description)
+           (where {:flag 0}))
+   (shuffle)
+   (take num)))
