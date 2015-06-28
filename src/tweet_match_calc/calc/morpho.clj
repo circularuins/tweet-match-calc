@@ -138,8 +138,9 @@
 ;; top5ワードを返す
 (defn get-top-words [words]
   (->>
-   (take 5 words)
-   (map #(nth % 0))))
+   (take 15 words)
+   (map #(array-map :word (nth % 0)
+                    :count (nth % 1)))))
 
 ;; 最終的に欲しいマップを返す
 (defn get-tweet-analyze [user-id auth]

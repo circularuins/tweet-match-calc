@@ -28,13 +28,13 @@
                   tweets
                   (map #(.getUser %))
                   (first)
-                  (.getBiggerProfileImageURL))
+                  (.getOriginalProfileImageURL))
                  :profile-back-url
                  (->>
                   tweets
                   (map #(.getUser %))
                   (first)
-                  (.getProfileBackgroundImageURL))
+                  (.getProfileBannerRetinaURL))
                  :user-name
                  (->>
                   tweets
