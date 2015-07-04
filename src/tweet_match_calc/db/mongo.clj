@@ -35,7 +35,8 @@
                 :tweet tweet
                 :date date
                 :description description
-                :profile-back-url profile-back-url}
+                :profile-back-url profile-back-url
+                :pv 0}
                {:upsert true})))
 
 (defn get-data
