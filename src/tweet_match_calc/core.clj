@@ -4,7 +4,8 @@
             [tweet-match-calc.calc.morpho :as morpho]
             [tweet-match-calc.calc.leven :as leven]
             [tweet-match-calc.api.twitter :as twitter]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:gen-class))
 
 
 ;; API利用用twitterアカウント
@@ -66,6 +67,10 @@
       (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
                (go-matching (mysql/select-girls) tw-accounts "g"))
       (Thread/sleep 180000))))
+
+;; main
+(defn -main [& args]
+    (pararell-match))
 
 
 ;; ランキングデータ初期化用
