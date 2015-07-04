@@ -61,8 +61,11 @@
 
 ;; 解析実行
 (defn pararell-match []
-  (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
-           (go-matching (mysql/select-girls) tw-accounts "g")))
+  (while true
+    (do
+      (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
+               (go-matching (mysql/select-girls) tw-accounts "g"))
+      (Thread/sleep 180000))))
 
 
 ;; ランキングデータ初期化用
