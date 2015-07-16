@@ -39,6 +39,16 @@
                 :pv 0}
                {:upsert true})))
 
+(defn add-couple-data
+  [id partner-screen-name best-leven date]
+  (let [coll "best-matching"]
+    (mc/update db coll {:user-id id}
+               {:user-id id
+                :partner-screen-name partner-screen-name
+                :best-leven best-leven
+                :date date}
+               {:upsert true})))
+
 (defn get-data
   [screen-name]
   (->> (mq/with-collection db "mach-ranking"
@@ -54,6 +64,15 @@
        (shuffle)
        (take 10)))
 
+(defn get-best-couple
+  []
+  (nth (->> (mq/with-collection db "best-matching"
+              (mq/find {:best-leven {mo/$gte 600}})
+              (mq/sort (array-map :best-leven 1))
+              (mq/limit 1)))
+       0))
+
+
 
 ;; 補助関数
 
@@ -62,3 +81,4 @@
 
 (defn count-all [coll]
   (mc/count db coll))
+

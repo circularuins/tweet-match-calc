@@ -45,6 +45,11 @@
                               (:date user)
                               (:description user)
                               (:profile-back-url user-data))
+              (mongo/add-couple-data (:user_id user)
+                                     (:screen-name (nth (sort-by :leven @analyses) 0))
+                                     (:leven (nth (sort-by :leven @analyses) 0))
+                                     (:date user)
+                                     )
               (println
                (array-map :screen-name (:screen_name user)
                           :user-name (:user-name user-data)
