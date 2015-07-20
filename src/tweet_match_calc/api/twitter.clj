@@ -2,19 +2,16 @@
   (:require [clojure.string :as str])
   (:import [twitter4j conf.ConfigurationBuilder TwitterFactory Twitter Query TwitterException Paging]))
 
-;; consumer-key, consumer-secret, access-token, access-token-secret の読み込み
-(def auth-data (read-string (slurp "config/twitter.clj")))
-
-(defn make-config []
+(defn make-config [auth]
   (let [config (new ConfigurationBuilder)]
-    (. config setOAuthConsumerKey (auth-data :consumer-key))
-    (. config setOAuthConsumerSecret (auth-data :consumer-secret))
-    (. config setOAuthAccessToken (auth-data :access-token))
-    (. config setOAuthAccessTokenSecret (auth-data :access-token-secret))
+    (. config setOAuthConsumerKey (auth :consumer-key))
+    (. config setOAuthConsumerSecret (auth :consumer-secret))
+    (. config setOAuthAccessToken (auth :access-token))
+    (. config setOAuthAccessTokenSecret (auth :access-token-secret))
     (. config build)))
 
-(defn make-twitter []
-  (let [config (make-config)
+(defn make-twitter [auth]
+  (let [config (make-config auth)
         factory (new TwitterFactory config)]
     (. factory getInstance)))
 
@@ -22,10 +19,31 @@
    (Paging. (int 1) (int 100)))
 
 ;; ユーザータイムラインの取得
-(defn get-tweets [screen-name]
-  (let [twitter (make-twitter)
-        tweets (.getUserTimeline twitter screen-name paging)]
-    (->>
-     tweets
-     (map #(.getText %))
-     str/join)))
+(defn get-tweets [user-id auth]
+  (try
+    (let [twitter (make-twitter auth)
+          tweets (.getUserTimeline twitter user-id paging)]
+      (array-map :profile-image
+                 (->>
+                  tweets
+                  (map #(.getUser %))
+                  (first)
+                  (.getOriginalProfileImageURL))
+                 :profile-back-url
+                 (->>
+                  tweets
+                  (map #(.getUser %))
+                  (first)
+                  (.getProfileBannerRetinaURL))
+                 :user-name
+                 (->>
+                  tweets
+                  (map #(.getUser %))
+                  (first)
+                  (.getName))
+                 :text
+                 (->>
+                  tweets
+                  (map #(.getText %))
+                  str/join)))
+    (catch Exception e (str "caught exception: " (.getMessage e)))))

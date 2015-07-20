@@ -1,45 +1,95 @@
 (ns tweet-match-calc.core
   (:require [tweet-match-calc.db.mysql :as mysql]
-            [tweet-match-calc.api.twitter :as twitter]
+            [tweet-match-calc.db.mongo :as mongo]
             [tweet-match-calc.calc.morpho :as morpho]
             [tweet-match-calc.calc.leven :as leven]
-            [clojure.string :as str]))
+            [tweet-match-calc.api.twitter :as twitter]
+            [clojure.string :as str])
+  (:gen-class))
 
 
-;;　テストデータ
-;; (morpho/get-tweet-analyze "tamakazura_yuri")
-;; (morpho/get-tweet-analyze "doumonnd")
+;; API利用用twitterアカウント
+(def tw-accounts (read-string (slurp "config/twitter.clj")))
 
-;; (morpho/get-tweet-analyze "kanojo_hoshi_")
-;; (morpho/get-tweet-analyze "rikut_rock")
-;; (morpho/get-tweet-analyze "BaskeHi")
-;; (morpho/get-tweet-analyze "ilikesicp")
-;; (morpho/get-tweet-analyze "nobkz")
-;; (morpho/get-tweet-analyze "takuya199850")
-;; (morpho/get-tweet-analyze "mug_en")
-;; (morpho/get-tweet-analyze "charaoyukirin")
-;; (morpho/get-tweet-analyze "tetsuya1975m")
+;; テストデータ
+;; (def b-1 ["kanojo_hoshi_" "eclipse_rkt" "BaskeHi" "ilikesicp" "nobkz" "takuya199850" "mug_en" "charaoyukirin" "tetsuya1975m" "doumonnd"])
+;; (def g-1 ["kareshi_hoshi_" "namida1055" "0428hrChi" "nemukyun1" "chomado" "Zwei_Megu" "xion_2574" "ManyaRiko" "gyuunyuu_umai" "tamakazura_yuri"])
 
-;; (morpho/get-tweet-analyze "kareshi_hoshi_")
-;; (morpho/get-tweet-analyze "namida1055")
-;; (morpho/get-tweet-analyze "0428hrChi")
-;; (morpho/get-tweet-analyze "nemukyun1")
-;; (morpho/get-tweet-analyze "chomado")
-;; (morpho/get-tweet-analyze "Zwei_Megu")
-;; (morpho/get-tweet-analyze "xion_2574")
-;; (morpho/get-tweet-analyze "ManyaRiko")
-;; (morpho/get-tweet-analyze "gyuunyuu_umai")
+;; １ユーザー毎の、相性ランキング、頻出ワードを取得する
+(defn get-analyses [user candidates twitters sex]
+  (loop [i 0
+         analyses (atom [])
+         user-data (morpho/get-tweet-analyze (Long/parseLong (:user_id user))
+                                             (nth twitters (- (count twitters) 1)))]
+    (when (< i (count candidates))
+      (let [twitter (nth twitters (rem i (count twitters)))
+            candidate (nth candidates i)]
+        (Thread/sleep 30)
+        (let [candidate-data (morpho/get-tweet-analyze (Long/parseLong (:user-id candidate))
+                                                       twitter)]
+          (swap! analyses conj (array-map :screen-name (:screen-name candidate)
+                                          :profile-image (:profile-image candidate-data)
+                                          :user-name (:user-name candidate-data)
+                                          :leven (leven/levenshtein-distance (:text user-data)
+                                                                             (:text candidate-data))))
+          (if (= (+ i 1) (count candidates))
+            (do
+              (mongo/add-data (:user_id user)
+                              (:screen_name user)
+                              (:top-words user-data)
+                              (sort-by :leven @analyses)
+                              sex
+                              (:profile-image user-data)
+                              (:user-name user-data)
+                              (:tweet user)
+                              (:date user)
+                              (:description user)
+                              (:profile-back-url user-data))
+              (mongo/add-couple-data (:user_id user)
+                                     (:screen-name (nth (sort-by :leven @analyses) 0))
+                                     (:leven (nth (sort-by :leven @analyses) 0))
+                                     (:date user)
+                                     )
+              (println
+               (array-map :screen-name (:screen_name user)
+                          :user-name (:user-name user-data)
+                          :prof-img (:profile-image user-data)
+                          :top-words (:top-words user-data)
+                          :ranking (sort-by :leven @analyses))))
+            (recur (inc i) analyses user-data)))))))
+
+;; バッチ処理用
+(defn go-matching [users twitters sex]
+  (if (= sex "b")
+    (pmap #(get-analyses % (mongo/get-rnd-user "g") twitters sex) users)
+    (pmap #(get-analyses % (mongo/get-rnd-user "b") twitters sex) users)))
 
 
-;; (leven/get-leven-noun "tamakazura_yuri" "doumonnd")
-
-(def boys ["kanojo_hoshi_" "rikut_rock" "BaskeHi" "ilikesicp" "nobkz" "takuya199850" "mug_en" "charaoyukirin" "tetsuya1975m"])
-(def girls ["kareshi_hoshi_" "namida1055" "0428hrChi" "nemukyun1" "chomado" "Zwei_Megu" "xion_2574" "ManyaRiko" "gyuunyuu_umai"])
-
-(defn test-leven []
-  (for [b boys
-        g girls]
+;; 解析実行
+(defn pararell-match []
+  (while true
     (do
-      (Thread/sleep 5000)
-      (str b "/" g ":" (leven/get-leven-noun b g))
-      )))
+      (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
+               (go-matching (mysql/select-girls) tw-accounts "g"))
+      (Thread/sleep 180000))))
+
+;; main
+(defn -main [& args]
+    (pararell-match))
+
+
+;; ランキングデータ初期化用
+(defn fix-object [object]
+  (let [id (:user_id object)
+        name (:screen_name object)]
+    (-> object
+        (assoc :user-id id)
+        (assoc :screen-name name))))
+
+(defn init-ranking
+  [num]
+  (let [boys (mysql/get-rnd-boys num)
+        girls (mysql/get-rnd-girls num)]
+;    (mongo/all-clear "mach-ranking")
+    (pvalues (pmap #(get-analyses % (map fix-object girls) tw-accounts "b") boys)
+             (pmap #(get-analyses % (map fix-object boys)  tw-accounts "g") girls))))
