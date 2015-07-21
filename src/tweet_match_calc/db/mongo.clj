@@ -60,6 +60,8 @@
   [sex]
   (->> (mq/with-collection db "mach-ranking"
          (mq/find {:sex sex})
+         (mq/sort (array-map :date 1))
+         (mq/limit 20000)
          (mq/fields [:screen-name :user-id]))
        (shuffle)
        (take 10)))

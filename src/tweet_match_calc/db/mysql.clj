@@ -31,7 +31,7 @@
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (order :no :DESC)
            (limit 50))
-   (filter #(= 0 (:flag %)))))
+   (filter #(= 0 (:batch %)))))
 
 (defn select-girls []
   (->>
@@ -39,14 +39,16 @@
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (order :no :DESC)
            (limit 50))
-   (filter #(= 0 (:flag %)))))
+   (filter #(= 0 (:batch %)))))
 
 (defn get-rnd-boys
   [num]
   (->>
    (select kanojo_hoshi
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
-           (where {:flag 0}))
+           (where {:batch 0})
+           (order :no :DESC)
+           (limit 10000))
    (shuffle)
    (take num)))
 
@@ -55,6 +57,18 @@
   (->>
    (select kareshi_hoshi
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
-           (where {:flag 0}))
+           (where {:batch 0})
+           (order :no :DESC)
+           (limit 10000))
    (shuffle)
    (take num)))
+
+(defn complete-matching
+  [user-id sex]
+  (if (= sex "b")
+    (update kanojo_hoshi
+            (set-fields {:batch 1})
+            (where {:user_id user-id}))
+    (update kareshi_hoshi
+            (set-fields {:batch 1})
+            (where {:user_id user-id}))))

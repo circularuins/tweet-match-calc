@@ -50,6 +50,7 @@
                                      (:leven (nth (sort-by :leven @analyses) 0))
                                      (:date user)
                                      )
+              (mysql/complete-matching (:user_id user) sex)
               (println
                (array-map :screen-name (:screen_name user)
                           :user-name (:user-name user-data)
