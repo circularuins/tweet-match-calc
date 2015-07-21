@@ -31,7 +31,7 @@
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (order :no :DESC)
            (limit 50))
-   (filter #(= 0 (:flag %)))))
+   (filter #(= 0 (:batch %)))))
 
 (defn select-girls []
   (->>
@@ -39,7 +39,7 @@
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (order :no :DESC)
            (limit 50))
-   (filter #(= 0 (:flag %)))))
+   (filter #(= 0 (:batch %)))))
 
 (defn get-rnd-boys
   [num]
