@@ -47,6 +47,7 @@
    (select kanojo_hoshi
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (where {:batch 0})
+           (order :no :DESC)
            (limit 10000))
    (shuffle)
    (take num)))
@@ -57,6 +58,7 @@
    (select kareshi_hoshi
            (fields :name :screen_name :user_id :date :flag :tweet :date :description)
            (where {:batch 0})
+           (order :no :DESC)
            (limit 10000))
    (shuffle)
    (take num)))
