@@ -60,3 +60,13 @@
            (limit 10000))
    (shuffle)
    (take num)))
+
+(defn complete-matching
+  [user-id sex]
+  (if (= sex "b")
+    (update kanojo_hoshi
+            (set-fields {:batch 1})
+            (where {:user_id user-id}))
+    (update kareshi_hoshi
+            (set-fields {:batch 1})
+            (where {:user_id user-id}))))
