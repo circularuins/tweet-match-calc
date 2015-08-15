@@ -72,7 +72,7 @@
     (do
       (pvalues (go-matching (mysql/select-boys) tw-accounts "b")
                (go-matching (mysql/select-girls) tw-accounts "g"))
-      (Thread/sleep 180000))))
+      (Thread/sleep 120000))))
 
 ;; main
 (defn -main [& args]
